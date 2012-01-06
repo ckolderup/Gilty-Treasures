@@ -1,0 +1,7 @@
+%h2#what
+  #{@p.name}
+
+%img#splash{:src => @p.image_url}
+
+%h3#price
+  = "$%.2f" % @p.price

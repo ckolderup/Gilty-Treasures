@@ -1,0 +1,4 @@
+.rvmrc
+.sass-cache/*
+Gemfile.lock
+*.db
