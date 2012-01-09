@@ -22,10 +22,12 @@ def fetch_sales(url)
   end
 end
 
-def find_product_and_price(sales)
+def find_product_and_price(sales, date)
   pick_product, pick_price = nil, 0
   sales.each do |sale|
     next if sale['products'].nil?
+    begins = DateTime.parse(sale['begins'])
+    next unless Date.new(begins.year, begins.month, begins.day) === date
     sale['products'].each do |product|
       high_price = highest_sku_price(product)
       if (high_price > pick_price) then
@@ -76,7 +78,7 @@ get '/:year/:month/:day' do
 
   if @p.nil?
     if (d === Date.today)
-      product, price = find_product_and_price(fetch_sales(QUERY_URL))
+      product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
       image_url = product['image_urls'].first.gsub('91x121','420x560')
       @p = Product.create(:name => product['name'], :description => product['description'],
                          :price => price, :image_url => image_url, 
