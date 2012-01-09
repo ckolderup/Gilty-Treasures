@@ -78,7 +78,7 @@ get '/:year/:month/:day' do
     if (d === Date.today)
       product, price = find_product_and_price(fetch_sales(QUERY_URL))
       @p = Product.create(:name => product['name'], :description => product['description'],
-                         :price => price, :image_url => product['image_urls'].last, 
+                         :price => price, :image_url => product['image_urls'].first, 
                          :date => Date.today)
       haml :one
     else
