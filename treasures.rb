@@ -77,8 +77,9 @@ get '/:year/:month/:day' do
   if @p.nil?
     if (d === Date.today)
       product, price = find_product_and_price(fetch_sales(QUERY_URL))
+      image_url = product['image_urls'].first.gsub('91x121','420x560')
       @p = Product.create(:name => product['name'], :description => product['description'],
-                         :price => price, :image_url => product['image_urls'].first, 
+                         :price => price, :image_url => image_url, 
                          :date => Date.today)
       haml :one
     else
