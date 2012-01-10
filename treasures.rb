@@ -61,6 +61,7 @@ class Product
   property :price, Decimal
   property :date, Date
   property :image_url, Text
+  property :url, Text
 end
 
 DataMapper.auto_upgrade!
@@ -85,10 +86,11 @@ get '/:year/:month/:day' do
       if (@p.nil?) then
         product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
         image_url = product['image_urls'].first.gsub('91x121','420x560')
+        url = product['url']
         @p = Product.create(:name => product['name'], 
                             :description => product['description'],
-                            :price => price, :image_url => image_url, 
-                            :date => Date.today)
+                            :price => price, :image_url => image_url,
+                            :url => url, :date => Date.today)
       end
       raise NoProductError, "Error fetching product for today. Try again later." if @p.nil?
       haml :one
