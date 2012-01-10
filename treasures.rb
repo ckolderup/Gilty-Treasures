@@ -9,6 +9,9 @@ GILT_API_KEY = ENV['GILT_API_KEY'] || ''
 API_DOMAIN = 'https://api.gilt.com'
 QUERY_URL = "#{API_DOMAIN}/v1/sales/active.json?product_detail=true&apikey=#{GILT_API_KEY}"
 
+class NoProductError < RuntimeError
+end
+
 def fetch_sales(url)
   uri = URI.parse(url)
   http = Net::HTTP.new(uri.host, uri.port)
@@ -63,37 +66,40 @@ end
 DataMapper.auto_upgrade!
 
 get '/' do
-  t = Date.today
-  redirect "/#{t.year}/#{t.month}/#{t.day}"
+  d = DateTime.now
+  d = d - 1 if (d.hour < 12)
+  redirect "/#{d.year}/#{d.month}/#{d.day}"
 end
 
 get '/:year/:month/:day' do
   begin
-    d = Date.new(params[:year].to_i, params[:month].to_i, params[:day].to_i)
+    d = DateTime.new(params[:year].to_i, params[:month].to_i, params[:day].to_i)
   rescue
     error 404
   end
+  
+  @p = Product.first(:date => Date.new(d.year, d.month, d.day))
 
-  @p = Product.first(:date => d)
-
-  if @p.nil?
-    if (d === Date.today)
-      product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
-      image_url = product['image_urls'].first.gsub('91x121','420x560')
-      @p = Product.create(:name => product['name'], :description => product['description'],
-                         :price => price, :image_url => image_url, 
-                         :date => Date.today)
+  begin 
+    if (d === Date.today && DateTime.now.hour >= 12) then
+      if (@p.nil?) then
+        product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
+        image_url = product['image_urls'].first.gsub('91x121','420x560')
+        @p = Product.create(:name => product['name'], 
+                            :description => product['description'],
+                            :price => price, :image_url => image_url, 
+                            :date => Date.today)
+      end
+      raise NoProductError, "Error fetching product for today. Try again later." if @p.nil?
+      haml :one
+    elsif (d < Date.today) then
+      raise NoProductError, "No data collected for this day." if @p.nil?
       haml :one
     else
-      if d > Date.today
-        @error = "You can't look into the future, silly!"
-      else
-        @error = "No data collected for this day."
-      end
-
-      haml :none
+      raise NoProductError, "You can't look into the future, silly!"
     end
-  else
-    haml :one
+  rescue NoProductError
+    @error = $!
+    haml :none
   end
 end
