@@ -82,7 +82,8 @@ get '/:year/:month/:day' do
   @p = Product.first(:date => Date.new(d.year, d.month, d.day))
 
   begin 
-    if (d === Date.today && DateTime.now.hour >= 12) then
+    if (d === Date.today && DateTime.now.hour >= 12 || 
+        d === Date.today - 1 && DateTime.now.hour <= 12) then
       if (@p.nil?) then
         product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
         image_url = product['image_urls'].first.gsub('91x121','420x560')
