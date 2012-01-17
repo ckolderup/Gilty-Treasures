@@ -91,7 +91,7 @@ get '/:year/:month/:day' do
         @p = Product.create(:name => product['name'], 
                             :description => product['description'],
                             :price => price, :image_url => image_url,
-                            :url => url, :date => Date.today)
+                            :url => url, :date => d)
       end
       raise NoProductError, "Error fetching product for today. Try again later." if @p.nil?
       haml :one
