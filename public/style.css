@@ -2,13 +2,17 @@ body {
   background-color: #eeeeee;
   padding-top: 40px; }
 
-#header {
+#header a {
   font-family: "Homemade Apple", cursive;
   font-size: 48px;
-  color: #777777;
+  color: #777777 !important;
   padding: 10px;
   position: relative;
   z-index: 1000; }
+
+#header a:hover {
+  color: #777777 !important;
+  text-decoration: none; }
 
 #footer {
   text-align: center; }
