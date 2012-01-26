@@ -51,6 +51,14 @@ def highest_sku_price(product)
   highest
 end
 
+def product_before(date)
+  Product.first(:date.lt => date, :order => [ :date.desc ])
+end
+
+def product_after(date)
+  Product.first(:date.gt => date, :order => [ :date.asc ])
+end
+
 DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite://#{Dir.pwd}/treasures.db")
 
 class Product
@@ -59,7 +67,7 @@ class Product
   property :name, Text
   property :description, Text
   property :price, Decimal
-  property :date, Date
+  property :date, Date, :unique => true
   property :image_url, Text
   property :url, Text
 end
@@ -94,9 +102,13 @@ get '/:year/:month/:day' do
                             :url => url, :date => d)
       end
       raise NoProductError, "Error fetching product for today. Try again later." if @p.nil?
+      @prev = product_before(@p.date)
+      @next = product_after(@p.date)
       haml :one
     elsif (d < Date.today) then
       raise NoProductError, "No data collected for this day." if @p.nil?
+      @prev = product_before(@p.date)
+      @next = product_after(@p.date)
       haml :one
     else
       raise NoProductError, "You can't look into the future, silly!"

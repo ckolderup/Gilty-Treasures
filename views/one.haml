@@ -14,3 +14,14 @@
 
 %h3#price
   = "$%.2f" % @p.price
+
+- unless @prev.nil?
+  #prev
+    %a{:href => "/#{@prev.date.year}/#{@prev.date.month}/#{@prev.date.day}"}
+      Previous
+
+- unless @next.nil?
+  #next
+    %a{:href => "/#{@next.date.year}/#{@next.date.month}/#{@next.date.day}"}
+      Next
+

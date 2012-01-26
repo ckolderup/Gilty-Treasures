@@ -32,6 +32,16 @@ body {
   font-size: 46px;
   color: goldenrod; }
 
+#prev {
+  position: absolute;
+  top: 300px;
+  left: 10px; }
+
+#next {
+  position: absolute;
+  top: 300px;
+  right: 10px; }
+
 .content {
   position: relative;
   background-color: white;
