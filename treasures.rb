@@ -59,6 +59,10 @@ def product_after(date)
   Product.first(:date.gt => date, :order => [ :date.asc ])
 end
 
+def top5
+  Product.all(:limit => 5, :order => [ :price.desc ])
+end
+
 DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite://#{Dir.pwd}/treasures.db")
 
 class Product
@@ -78,6 +82,11 @@ get '/' do
   d = DateTime.now
   d = d - 1 if (d.hour < 12)
   redirect "/#{d.year}/#{d.month}/#{d.day}"
+end
+
+get '/top' do
+  @top = top5
+  haml :top
 end
 
 get '/:year/:month/:day' do

@@ -1,0 +1,9 @@
+%h2
+  Top 5 Most Expensive Products
+%dl
+  - @top.each do |product|
+    %dt
+      %a{:href => "/#{product.date.year}/#{product.date.month}/#{product.date.day}" }
+        #{product.name} 
+    %dd
+      #{"$%.2f" % product.price}
