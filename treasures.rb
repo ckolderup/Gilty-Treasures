@@ -21,7 +21,7 @@ def fetch_sales(url)
   if (response.code != "200") then
     raise "Response #{response.code}"
   else
-    return JSON.parse(response.body)
+    return (JSON.parse(response.body))["sales"]
   end
 end
 
@@ -103,7 +103,7 @@ get '/:year/:month/:day' do
         d === Date.today - 1 && DateTime.now.hour <= 12) then
       if (@p.nil?) then
         product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
-        image_url = product['image_urls'].first.gsub('91x121','420x560')
+        image_url = product['image_urls']['420x560'].first
         url = product['url']
         @p = Product.create(:name => product['name'], 
                             :description => product['description'],
