@@ -7,48 +7,72 @@ require 'net/https'
 
 GILT_API_KEY = ENV['GILT_API_KEY'] || ''
 API_DOMAIN = 'https://api.gilt.com'
-QUERY_URL = "#{API_DOMAIN}/v1/sales/active.json?product_detail=true&apikey=#{GILT_API_KEY}"
+SALES_URL = "#{API_DOMAIN}/v1/sales/active.json?apikey=#{GILT_API_KEY}"
 
 class NoProductError < RuntimeError
 end
 
-def fetch_sales(url)
-  uri = URI.parse(url)
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = true
-  request = Net::HTTP::Get.new(uri.request_uri)
-  response = http.request(request)
-  if (response.code != "200") then
-    raise "Response #{response.code}"
-  else
-    return (JSON.parse(response.body))["sales"]
+class Gilt
+  def self.max(date)
+    sales = get_sales(date)
+    products = products_for_sales(sales)
+    product = biggest_product(products, date)
   end
-end
 
-def find_product_and_price(sales, date)
-  pick_product, pick_price = nil, 0
-  sales.each do |sale|
-    next if sale['products'].nil?
-    begins = DateTime.parse(sale['begins'])
-    next unless Date.new(begins.year, begins.month, begins.day) === date
-    sale['products'].each do |product|
+  private
+  def self.fetch(url)
+    puts "fetching #{url}..."
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    request = Net::HTTP::Get.new(uri.request_uri)
+    response = http.request(request)
+    if (response.code != "200") then
+      raise "Response #{response.code}"
+    else
+      JSON.parse(response.body)
+    end
+  end
+
+  def self.get_sales(date)
+    sales = fetch(SALES_URL)["sales"]
+    sales.delete_if do |sale|
+      begins = DateTime.parse(sale["begins"])
+      Date.new(begins.year, begins.month, begins.day) != date
+    end
+  end
+
+  def self.products_for_sales(sales)
+    products = []
+    sales.each do |sale|
+      next if sale["products"].nil?
+      sale["products"].each { |url| products << fetch("#{url}?apikey=#{GILT_API_KEY}") }
+    end
+    products
+  end
+
+  def self.biggest_product(products, date)
+    pick_product, pick_price = nil, 0
+    products.each do |product|
       high_price = highest_sku_price(product)
       if (high_price > pick_price) then
         pick_product = product
+        pick_product['price'] = high_price
         pick_price = high_price 
       end
     end
+    pick_product
   end
-  [pick_product, pick_price]
-end
 
-def highest_sku_price(product)
-  highest = 0
-  product['skus'].each do |sku|
-    sale_price = sku['sale_price'].to_d
-    highest = sale_price if sale_price > highest
+  def self.highest_sku_price(product)
+    highest = 0
+    product['skus'].each do |sku|
+      sale_price = sku['sale_price'].to_d
+      highest = sale_price if sale_price > highest
+    end
+    highest
   end
-  highest
 end
 
 def product_before(date)
@@ -74,6 +98,16 @@ class Product
   property :date, Date, :unique => true
   property :image_url, Text
   property :url, Text
+
+  def self.fromMap(obj, date)
+    image_url = obj['image_urls']['420x560'].first['url']
+    url = obj['url']
+    Product.create(:name => obj['name'],
+                   :description => obj['description'],
+                   :price => obj['price'],
+                   :image_url => image_url,
+                   :url => url, :date => date)
+  end
 end
 
 DataMapper.auto_upgrade!
@@ -96,19 +130,13 @@ get '/:year/:month/:day' do
     error 404
   end
   
-  @p = Product.first(:date => Date.new(d.year, d.month, d.day))
+  @p = Product.first(:date => d)
 
   begin 
     if (d === Date.today && DateTime.now.hour >= 12 || 
         d === Date.today - 1 && DateTime.now.hour <= 12) then
       if (@p.nil?) then
-        product, price = find_product_and_price(fetch_sales(QUERY_URL), d)
-        image_url = product['image_urls']['420x560'].first['url']
-        url = product['url']
-        @p = Product.create(:name => product['name'], 
-                            :description => product['description'],
-                            :price => price, :image_url => image_url,
-                            :url => url, :date => d)
+        @p = Product.fromMap(Gilt.max(d), d)
       end
       raise NoProductError, "Error fetching product for today. Try again later." if @p.nil?
       @prev = product_before(@p.date)
