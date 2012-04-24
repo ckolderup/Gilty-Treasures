@@ -24,11 +24,11 @@ class Product
   property :url, Text
 
   def self.before(date)
-    Product.first(:date.lt => date, :order => [ :date.desc ])
+    Product.first(:date.lt => DateTime.new(date.year, date.month, date.day), :order => [ :date.desc ])
   end
 
   def self.after(date)
-    Product.first(:date.lt => date, :order => [ :date.asc ])
+    Product.first(:date.lt => DateTime.new(date.year, date.month, date.day), :order => [ :date.asc ])
   end
 
   def self.top5
