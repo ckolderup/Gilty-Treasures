@@ -61,7 +61,7 @@ end
 def fetch_product(date)
   puts "fetching products..."
   sales = Gilt::Sale.active :apikey => GILT_API_KEY
-  todays_sales = sales.select {|sale| Date.new(sale.begins.year, sale.begins.month, sale.begins.day) === date }
+  todays_sales = sales.select {|sale| sale.begins.to_date === date }
   products = todays_sales.collect{|sale| sale.products}.flatten
   sorted_products = products.sort do |a,b|
     b.max_price <=> a.max_price
