@@ -11,4 +11,5 @@ gem "gilt"
 group :development do
   gem "shotgun"
   gem "tux"
+  gem "heroku"
 end
