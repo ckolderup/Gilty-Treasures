@@ -24,15 +24,15 @@ class Product
   property :url, Text
 
   def self.before(date)
-    Product.first(:date.lt => DateTime.new(date.year, date.month, date.day), :order => [ :date.desc ])
+    self.first(:date.lt => date, :order => [ :date.desc ])
   end
 
   def self.after(date)
-    Product.first(:date.lt => DateTime.new(date.year, date.month, date.day), :order => [ :date.asc ])
+    self.first(:date.lt => date, :order => [ :date.asc ])
   end
 
   def self.top5
-    Product.all(:limit => 5, :order => [ :price.desc ])
+    self.all(:limit => 5, :order => [ :price.desc ])
   end
 end
 
@@ -83,7 +83,7 @@ get '/:year/:month/:day' do
 
   @p = Product.first(:date => DateTime.new(date.year, date.month, date.day))
   @prev = Product.before(date)
-  @prev = Product.after(date)
+  @next = Product.after(date)
 
   fetch_product(date) if @p.nil? && date_is_latest?(date)
 
