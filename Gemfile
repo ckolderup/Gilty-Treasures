@@ -7,6 +7,7 @@ gem "dm-postgres-adapter"
 gem "haml"
 gem "json"
 gem "gilt"
+gem "ratom"
 
 group :development do
   gem "shotgun"

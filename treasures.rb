@@ -5,6 +5,7 @@ require 'json'
 require 'net/http'
 require 'net/https'
 require 'gilt'
+require 'atom'
 
 GILT_API_KEY = ENV['GILT_API_KEY'] || ''
 
@@ -101,4 +102,29 @@ get '/:year/:month/:day' do
     @error = $!
     haml :none
   end
+end
+
+get '/atom' do
+  products = Product.all(:limit => 10, :order => [ :date.desc ])
+  updated = DateTime.new(products.first.date.year, products.first.date.month, products.first.date.day, 12)
+  feed_id = "tag:giltytreasures.heroku.com,2012:sale:feed"
+  feed = Atom::Feed.new do |f|
+    f.title = "Gilty Treasures"
+    f.links << Atom::Link.new(:href => "http://gilty-treasures.heroku.com", :rel => "alt")
+    f.links << Atom::Link.new(:href => "http://gilty-treasures.heroku.com/atom", :rel => "self")
+    f.id = feed_id
+    f.updated = updated
+    f.authors << Atom::Person.new(:name => "Casey Kolderup", :email => "casey@kolderup.org")
+    products.each do |product|
+      f.entries << Atom::Entry.new do |e|
+        e.title = product.name
+        e.links << Atom::Link.new(:href =>
+           "http://gilty-treasures.heroku.com/#{product.date.year}/#{product.date.month}/#{product.date.day}")
+        e.updated = DateTime.new(product.date.year, product.date.month, product.date.day, 12)
+        e.id = "#{feed_id}-#{product.id}"
+        e.summary = "FOR SALE: #{product.name} ($%.2f)" % product.price
+      end
+    end
+  end
+  feed.to_xml
 end
