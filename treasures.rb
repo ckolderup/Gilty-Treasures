@@ -28,7 +28,7 @@ class Product
   end
 
   def self.after(date)
-    self.first(:date.lt => date, :order => [ :date.asc ])
+    self.first(:date.gt => date, :order => [ :date.asc ])
   end
 
   def self.top5
